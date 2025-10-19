@@ -15,6 +15,9 @@ function mapHandler.update(dt)
         mapHandler.gameMap1:update(dt)
 end
 
+
+-- FIX THE ERROR ME!!!
+
 function mapHandler.drawFloor()
     love.graphics.push()
     love.graphics.scale(mapHandler.scale)
