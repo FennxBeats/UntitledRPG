@@ -1,0 +1,9 @@
+{
+    "Lua.diagnostics.globals": [
+        "love",
+        "bg"
+    ],
+    "Lua.diagnostics.disable": [
+        "undefined-global"
+    ]
+}
