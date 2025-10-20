@@ -88,7 +88,6 @@ function player.update(dt)
     end
     player.mouseWasDown = mouseDown
 
-    -- move collider properly with Windfield
     if moving then
         player.collider:setLinearVelocity(moveX * player.speed, moveY * player.speed)
     else
@@ -98,7 +97,6 @@ function player.update(dt)
     -- update position from collider
     player.x, player.y = player.collider:getPosition()
 
-    -- map bounds (optional)
     local mapHandler = require("mapHandler")
     local map = mapHandler.gameMap1
     if map then
@@ -119,7 +117,7 @@ function player.draw()
     local scale = 7
     player.anim:draw(
     player.images[player.state][player.dir],
-    player.x, player.y, -- try +10 or +15 more
+    player.x, player.y,
     nil, scale, scale, 3.5, 3.5
 )
 
