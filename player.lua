@@ -1,18 +1,20 @@
 local worldHandler = require "worldHandler"
+local soundHandler = require "soundHandler"
 local anim8 = require "libs/anim8"
 
 local player = {
-    speed = 300, -- pixels per second
+    speed = 300,
     dir = "down",
     state = "idle",
     mouseWasDown = false,
-    offsetY = 45 -- adjust this for sprite alignment
+    isWalkingSoundPlaying = false,
+    walkTimer = 0
 }
 
 function player.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
-    player.collider = worldHandler.world:newRectangleCollider(400, 270, 60, 90)
+    player.collider = worldHandler.world:newRectangleCollider(0, 0, 60, 90)
     player.collider:setFixedRotation(true)
 
     local imgPath = "assets/player/"
@@ -54,6 +56,9 @@ function player.load()
 end
 
 function player.update(dt)
+    player.x = player.collider:getX()
+    player.y = player.collider:getY()
+
     local moveX, moveY = 0, 0
     local moving = false
 
@@ -67,7 +72,7 @@ function player.update(dt)
     local len = math.sqrt(moveX^2 + moveY^2)
     if len > 0 then moveX, moveY = moveX / len, moveY / len end
 
-    -- handle punch logic
+    -- punch logic
     local mouseDown = love.mouse.isDown(1)
     local mousePressed = mouseDown and not player.mouseWasDown
     local punchAnim = player.sharedPunchAnim
@@ -76,6 +81,13 @@ function player.update(dt)
         player.state = "punch"
         punchAnim:gotoFrame(1)
         punchAnim:resume()
+
+        -- play first punch
+        local punchSound1 = soundHandler.punchWhoosh:clone()
+        punchSound1:setPitch(0.5 + math.random() * 0.5)
+        punchSound1:play()
+
+        player.punchTimer = 0.1  -- schedule second punch
     elseif player.state == "punch" then
         punchAnim:update(dt)
         if punchAnim.position == #punchAnim.frames then
@@ -86,17 +98,39 @@ function player.update(dt)
     else
         player.state = moving and "run" or "idle"
     end
-    player.mouseWasDown = mouseDown
 
-    if moving then
-        player.collider:setLinearVelocity(moveX * player.speed, moveY * player.speed)
-    else
-        player.collider:setLinearVelocity(0, 0)
+    -- delayed punch
+    if player.punchTimer then
+        player.punchTimer = player.punchTimer - dt
+        if player.punchTimer <= 0 then
+            local punchSound2 = soundHandler.punchWhoosh:clone()
+            punchSound2:setPitch(0.5 + math.random() * 0.5)
+            punchSound2:play()
+            player.punchTimer = nil
+        end
     end
 
-    -- update position from collider
-    player.x, player.y = player.collider:getPosition()
+    -- movement & walking sounds
+    if moving then
+        player.collider:setLinearVelocity(moveX * player.speed, moveY * player.speed)
 
+        -- footsteps every 0.1s
+        player.walkTimer = player.walkTimer - dt
+        if player.walkTimer <= 0 then
+            local stepSound = soundHandler.footstep:clone()
+            stepSound:setPitch(0.9 + math.random() * 0.2)
+            stepSound:play()
+            player.walkTimer = 0.4  -- super fast footsteps
+        end
+    else
+        player.collider:setLinearVelocity(0, 0)
+        player.walkTimer = 0
+    end
+
+
+
+
+    -- keep inside map
     local mapHandler = require("mapHandler")
     local map = mapHandler.gameMap1
     if map then
@@ -108,19 +142,21 @@ function player.update(dt)
         player.collider:setPosition(clampedX, clampedY)
     end
 
-    -- update current animation
+    -- update animation
     player.anim = player.anims[player.state][player.dir]
     player.anim:update(dt)
 end
 
 function player.draw()
     local scale = 7
-    player.anim:draw(
-    player.images[player.state][player.dir],
-    player.x, player.y,
-    nil, scale, scale, 3.5, 3.5
-)
+    local frameW, frameH = 32 * scale, 32 * scale
 
+    player.anim:draw(
+        player.images[player.state][player.dir],
+        player.x - frameW / 2,
+        player.y - frameH / 2,
+        nil, scale, scale
+    )
 end
 
 return player

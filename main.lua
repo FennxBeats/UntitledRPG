@@ -6,12 +6,15 @@ local camera = require "libs/camera"
 local player = require "player"
 local mapHandler = require "mapHandler"
 local worldHandler = require "worldHandler"
+local soundHandler = require "soundHandler"
 
 local cam = camera()
 
 function love.load()
     love.window.setMode(0, 0, { fullscreen = true })
     player.load()
+    soundHandler.load()
+    soundHandler.playRandomSong()
     mapHandler.load()
     worldHandler.load()
     gameMap1Handler.load()
@@ -19,6 +22,7 @@ end
 
 function love.update(dt)
     player.update(dt)
+    soundHandler.update(dt)
     mapHandler.update(dt)
     worldHandler.update(dt)
 

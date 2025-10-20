@@ -7,6 +7,9 @@ local gameMap1Handler = {}
 function gameMap1Handler.load()
     local fountain1 = worldHandler.world:newRectangleCollider(2510, 690, 250, 240)
     fountain1:setType("static")
+
+    local water1 = worldHandler.world:newRectangleCollider(2110, 1655, 500, 290)
+    water1:setType("static")
 end
 
 function gameMap1Handler.update()
