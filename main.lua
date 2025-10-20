@@ -11,10 +11,10 @@ local cam = camera()
 
 function love.load()
     love.window.setMode(0, 0, { fullscreen = true })
-    gameMap1Handler.load()
     player.load()
     mapHandler.load()
     worldHandler.load()
+    gameMap1Handler.load()
 end
 
 function love.update(dt)

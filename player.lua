@@ -5,13 +5,14 @@ local player = {
     speed = 300, -- pixels per second
     dir = "down",
     state = "idle",
-    mouseWasDown = false
+    mouseWasDown = false,
+    offsetY = 45 -- adjust this for sprite alignment
 }
 
 function player.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
-    player.collider = worldHandler.world:newBSGRectangleCollider(400, 250, 60, 90)
+    player.collider = worldHandler.world:newRectangleCollider(400, 270, 60, 90)
     player.collider:setFixedRotation(true)
 
     local imgPath = "assets/player/"
@@ -56,12 +57,17 @@ function player.update(dt)
     local moveX, moveY = 0, 0
     local moving = false
 
+    -- movement input
     if love.keyboard.isDown("d", "right") then moveX, player.dir, moving = moveX + 1, "right", true end
     if love.keyboard.isDown("a", "left")  then moveX, player.dir, moving = moveX - 1, "left", true end
     if love.keyboard.isDown("w", "up")    then moveY, player.dir, moving = moveY - 1, "up", true end
     if love.keyboard.isDown("s", "down")  then moveY, player.dir, moving = moveY + 1, "down", true end
 
-    -- Punch logic
+    -- normalize movement
+    local len = math.sqrt(moveX^2 + moveY^2)
+    if len > 0 then moveX, moveY = moveX / len, moveY / len end
+
+    -- handle punch logic
     local mouseDown = love.mouse.isDown(1)
     local mousePressed = mouseDown and not player.mouseWasDown
     local punchAnim = player.sharedPunchAnim
@@ -82,36 +88,41 @@ function player.update(dt)
     end
     player.mouseWasDown = mouseDown
 
-    -- Normalize movement
-    local len = math.sqrt(moveX^2 + moveY^2)
-    if len > 0 then moveX, moveY = moveX / len, moveY / len end
+    -- move collider properly with Windfield
+    if moving then
+        player.collider:setLinearVelocity(moveX * player.speed, moveY * player.speed)
+    else
+        player.collider:setLinearVelocity(0, 0)
+    end
 
-    -- Move through collider
-    player.collider:move(moveX * player.speed * dt, moveY * player.speed * dt)
+    -- update position from collider
     player.x, player.y = player.collider:getPosition()
 
-    -- Map bounds
+    -- map bounds (optional)
     local mapHandler = require("mapHandler")
     local map = mapHandler.gameMap1
     if map then
         local scale = mapHandler.scale
         local tileW, tileH = map.tilewidth * scale, map.tileheight * scale
         local mapW, mapH = map.width * tileW, map.height * tileH
-        player.collider:setPosition(
-            math.max(0, math.min(player.x, mapW)),
-            math.max(0, math.min(player.y, mapH))
-        )
-        player.x, player.y = player.collider:getPosition()
+        local clampedX = math.max(0, math.min(player.x, mapW))
+        local clampedY = math.max(0, math.min(player.y, mapH))
+        player.collider:setPosition(clampedX, clampedY)
     end
 
-    -- Update animation
+    -- update current animation
     player.anim = player.anims[player.state][player.dir]
     player.anim:update(dt)
 end
 
 function player.draw()
     local scale = 7
-    player.anim:draw(player.images[player.state][player.dir], player.x, player.y, nil, scale, scale, 3.5, 3.5)
+    player.anim:draw(
+    player.images[player.state][player.dir],
+    player.x, player.y, -- try +10 or +15 more
+    nil, scale, scale, 3.5, 3.5
+)
+
 end
 
 return player
