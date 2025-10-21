@@ -1,6 +1,9 @@
 local soundHandler = {}
+soundHandler.musicVolume = 0.2
+soundHandler.sfxVolume = 0.5
+soundHandler.songList = {} -- so UIHandler can loop through it
+
 local currentSong
-local songList = {}
 
 function soundHandler.load()
     -- Songs
@@ -12,16 +15,10 @@ function soundHandler.load()
     soundHandler.WTWR = love.audio.newSource("assets/sounds/music/normal/19 - Where The Winds Roam.mp3", "stream")
     soundHandler.TheJourney = love.audio.newSource("assets/sounds/music/normal/20 - The Journey.mp3", "stream")
 
-    -- Static sounds
     soundHandler.footstep = love.audio.newSource("assets/sounds/DIRT - Run 1.wav", "static")
     soundHandler.punchWhoosh = love.audio.newSource("assets/sounds/punch whoosh.wav", "static")
 
-    -- Volume
-    soundHandler.footstep:setVolume(0.2)
-    soundHandler.punchWhoosh:setVolume(0.05)
-
-    -- Song list
-    songList = {
+    soundHandler.songList = {
         soundHandler.TitleTheme,
         soundHandler.DOT,
         soundHandler.SilentForest,
@@ -31,27 +28,29 @@ function soundHandler.load()
         soundHandler.TheJourney
     }
 
-    -- reduce volume and speed up songs 10x
-    for _, song in ipairs(songList) do
-        song:setVolume(song:getVolume() * 0.05)  -- super quiet
+    soundHandler.applyVolumes()
+end
+
+function soundHandler.applyVolumes()
+    -- set all music
+    for _, song in ipairs(soundHandler.songList) do
+        song:setVolume(soundHandler.musicVolume)
     end
+
+    -- set sfx
+    soundHandler.footstep:setVolume(soundHandler.sfxVolume * 0.5)
+    soundHandler.punchWhoosh:setVolume(soundHandler.sfxVolume * 0.25)
 end
 
 function soundHandler.playRandomSong()
-    -- Stop previous if any
-    if currentSong then
-        currentSong:stop()
-    end
-
-    -- Pick a random song
-    local songIndex = love.math.random(#songList)
-    currentSong = songList[songIndex]
+    if currentSong then currentSong:stop() end
+    local i = love.math.random(#soundHandler.songList)
+    currentSong = soundHandler.songList[i]
     currentSong:setLooping(false)
     currentSong:play()
 end
 
 function soundHandler.update(dt)
-    -- Trigger next song if current finished
     if currentSong and not currentSong:isPlaying() then
         soundHandler.playRandomSong()
     end

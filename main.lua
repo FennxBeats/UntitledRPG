@@ -7,6 +7,7 @@ local player = require "player"
 local mapHandler = require "mapHandler"
 local worldHandler = require "worldHandler"
 local soundHandler = require "soundHandler"
+local UIHandler = require "UIHandler"
 
 local cam = camera()
 
@@ -15,15 +16,38 @@ function love.load()
     player.load()
     soundHandler.load()
     soundHandler.playRandomSong()
+    UIHandler.load()
     mapHandler.load()
     worldHandler.load()
     gameMap1Handler.load()
 end
 
+function love.keypressed(key)
+    UIHandler.keypressed(key)
+end
+
+function love.mousemoved(x, y)
+    UIHandler.mousemoved(x, y)
+end
+
+function love.mousepressed(x, y, button)
+    UIHandler.mousepressed(x, y, button)
+end
+
+function love.mousereleased(x, y, button)
+    UIHandler.mousereleased(x, y, button)
+end
+
 function love.update(dt)
+
+    if UIHandler.paused then
+        return
+    end
+
     player.update(dt)
     soundHandler.update(dt)
     mapHandler.update(dt)
+    UIHandler.update(dt)
     worldHandler.update(dt)
 
     local scale = mapHandler.scale
@@ -46,5 +70,5 @@ function love.draw()
         player.draw()
         worldHandler.draw()
     cam:detach()
-    love.graphics.print("X: " .. player.x .. " Y: " .. player.y, 10, 10)
+    UIHandler.draw()
 end
