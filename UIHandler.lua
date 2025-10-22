@@ -24,7 +24,7 @@ local hoveredButton = nil
 
 -- slider data
 local musicSlider = {x = 0, y = 0, w = 400, h = 10, value = 0.2}
-local sfxSlider   = {x = 0, y = 0, w = 400, h = 10, value = 0.5}
+local sfxSlider   = {x = 0, y = 0, w = 400, h = 10, value = 1}
 local dragging = nil
 
 function UIHandler.load()

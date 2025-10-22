@@ -1,6 +1,6 @@
 local soundHandler = {}
 soundHandler.musicVolume = 0.2
-soundHandler.sfxVolume = 0.5
+soundHandler.sfxVolume = 1
 soundHandler.songList = {} -- so UIHandler can loop through it
 
 local currentSong
