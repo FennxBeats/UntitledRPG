@@ -3,6 +3,7 @@ local gameMap1Handler = require "mapCollisions.gameMap1Handler"
 
 local camera = require "libs/camera"
 
+local EnemyHandler = require "EnemyHandler"
 local player = require "player"
 local mapHandler = require "mapHandler"
 local worldHandler = require "worldHandler"
@@ -16,6 +17,7 @@ function love.load()
     player.load()
     soundHandler.load()
     soundHandler.playRandomSong()
+    EnemyHandler.load()
     UIHandler.load()
     mapHandler.load()
     worldHandler.load()
@@ -39,13 +41,13 @@ function love.mousereleased(x, y, button)
 end
 
 function love.update(dt)
-
     if UIHandler.paused then
         return
     end
 
     player.update(dt)
     soundHandler.update(dt)
+    EnemyHandler.update(dt)
     mapHandler.update(dt)
     UIHandler.update(dt)
     worldHandler.update(dt)
@@ -67,6 +69,7 @@ function love.draw()
     cam:attach()
         mapHandler.drawFloor()
         mapHandler.drawForeground()
+        EnemyHandler.draw()
         player.draw()
         worldHandler.draw()
     cam:detach()
