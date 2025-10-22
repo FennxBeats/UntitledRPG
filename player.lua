@@ -11,6 +11,24 @@ local player = {
     walkTimer = 0
 }
 
+-- somewhere near top
+player.health = 100
+player.maxHealth = 100
+
+-- near top of player.lua
+player.justPunched = false
+player.punchRange = 80  -- tweak range of hit
+player.punchDamage = 10
+
+function player.takeDamage(amount)
+    player.health = player.health - amount
+    if player.health <= 0 then
+        player.health = 0
+        print("player dead :(")
+    end
+end
+
+
 function player.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -59,6 +77,8 @@ function player.update(dt)
     player.x = player.collider:getX()
     player.y = player.collider:getY()
 
+    player.justPunched = false
+
     local moveX, moveY = 0, 0
     local moving = false
 
@@ -86,6 +106,7 @@ function player.update(dt)
         local punchSound1 = soundHandler.punchWhoosh:clone()
         punchSound1:setPitch(0.5 + math.random() * 0.5)
         punchSound1:play()
+        player.justPunched = true
 
         player.punchTimer = 0.1  -- schedule second punch
     elseif player.state == "punch" then
@@ -157,6 +178,15 @@ function player.draw()
         player.y - frameH / 2,
         nil, scale, scale
     )
+end
+
+function player.drawHealth()
+    -- inside draw()
+    love.graphics.setColor(0,0,0)
+    love.graphics.rectangle("fill", 20, 20, 200, 20)
+    love.graphics.setColor(0,1,0)
+    love.graphics.rectangle("fill", 20, 20, 200 * (player.health/player.maxHealth), 20)
+    love.graphics.setColor(1,1,1)
 end
 
 return player

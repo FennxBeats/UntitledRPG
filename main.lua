@@ -73,5 +73,6 @@ function love.draw()
         player.draw()
         worldHandler.draw()
     cam:detach()
+    player.drawHealth()
     UIHandler.draw()
 end
