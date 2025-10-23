@@ -18,6 +18,8 @@ function soundHandler.load()
     soundHandler.footstep = love.audio.newSource("assets/sounds/DIRT - Run 1.wav", "static")
     soundHandler.punchWhoosh = love.audio.newSource("assets/sounds/punch whoosh.wav", "static")
 
+    soundHandler.punchHit = love.audio.newSource("assets/sounds/enemyHit.wav", "static")
+
     soundHandler.songList = {
         soundHandler.TitleTheme,
         soundHandler.DOT,

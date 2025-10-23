@@ -1,5 +1,4 @@
 -- worldHandler.lua
-
 local wf = require "libs/windfield"
 
 local worldHandler = {}
@@ -7,7 +6,7 @@ local worldHandler = {}
 worldHandler.world = wf.newWorld(0, 0)
 
 function worldHandler.load()
-    
+    -- No collision classes needed
 end
 
 function worldHandler.update(dt)

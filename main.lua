@@ -1,8 +1,9 @@
 -- main.lua
-local gameMap1Handler = require "mapCollisions.gameMap1Handler"
+local gameMap1Handler = require "spawnsPerMap.gameMap1Handler"
 
 local camera = require "libs/camera"
 
+-- First, require all modules (but don't call their load functions yet)
 local EnemyHandler = require "EnemyHandler"
 local player = require "player"
 local mapHandler = require "mapHandler"
@@ -17,11 +18,15 @@ function love.load()
     player.load()
     soundHandler.load()
     soundHandler.playRandomSong()
-    EnemyHandler.load()
     UIHandler.load()
     mapHandler.load()
-    worldHandler.load()
-    gameMap1Handler.load()
+    worldHandler.load()  -- This can be anywhere now
+
+    if mapHandler.currentMapName == "map1" then
+        gameMap1Handler.load()
+    end
+
+    EnemyHandler.load()
 end
 
 function love.keypressed(key)
@@ -70,9 +75,10 @@ function love.draw()
         mapHandler.drawFloor()
         mapHandler.drawForeground()
         EnemyHandler.draw()
+        player.drawHealth()
         player.draw()
         worldHandler.draw()
     cam:detach()
-    player.drawHealth()
     UIHandler.draw()
+    love.graphics.print("Player: " .. player.x .. ", " .. player.y, 10, 10)
 end

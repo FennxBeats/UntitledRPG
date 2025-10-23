@@ -7,34 +7,57 @@ local player = {
     dir = "down",
     state = "idle",
     mouseWasDown = false,
-    isWalkingSoundPlaying = false,
-    walkTimer = 0
+    walkTimer = 0,
+    health = 100,
+    maxHealth = 100,
+    justPunched = false,
+    punchRange = 120,
+    punchDamage = 5,
+    lastCombatTime = 0,
+    healTimer = 0,
+    healDelay = 30, -- seconds after combat
+    healRate = 1   -- heal per second
+
 }
-
--- somewhere near top
-player.health = 100
-player.maxHealth = 100
-
--- near top of player.lua
-player.justPunched = false
-player.punchRange = 80  -- tweak range of hit
-player.punchDamage = 10
 
 function player.takeDamage(amount)
     player.health = player.health - amount
+    player.lastCombatTime = love.timer.getTime()  -- <-- ADD THIS LINE
     if player.health <= 0 then
         player.health = 0
         print("player dead :(")
     end
 end
 
+function player.getPunchBox()
+    local size, length = 80, player.punchRange
+    local x, y, w, h
+
+    if player.dir == "up" then
+        w, h = size, length
+        x = player.x - w/2
+        y = player.y - h
+    elseif player.dir == "down" then
+        w, h = size, length
+        x = player.x - w/2
+        y = player.y
+    elseif player.dir == "left" then
+        w, h = length, size
+        x = player.x - w
+        y = player.y - h/2
+    elseif player.dir == "right" then
+        w, h = length, size
+        x = player.x
+        y = player.y - h/2
+    end
+
+    return x, y, w, h
+end
 
 function player.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
-
     player.collider = worldHandler.world:newRectangleCollider(0, 0, 60, 90)
     player.collider:setFixedRotation(true)
-
     local imgPath = "assets/player/"
     player.images = {
         idle = {
@@ -76,82 +99,73 @@ end
 function player.update(dt)
     player.x = player.collider:getX()
     player.y = player.collider:getY()
-
     player.justPunched = false
 
     local moveX, moveY = 0, 0
     local moving = false
-
-    -- movement input
     if love.keyboard.isDown("d", "right") then moveX, player.dir, moving = moveX + 1, "right", true end
     if love.keyboard.isDown("a", "left")  then moveX, player.dir, moving = moveX - 1, "left", true end
     if love.keyboard.isDown("w", "up")    then moveY, player.dir, moving = moveY - 1, "up", true end
     if love.keyboard.isDown("s", "down")  then moveY, player.dir, moving = moveY + 1, "down", true end
 
-    -- normalize movement
     local len = math.sqrt(moveX^2 + moveY^2)
     if len > 0 then moveX, moveY = moveX / len, moveY / len end
 
-    -- punch logic
     local mouseDown = love.mouse.isDown(1)
     local mousePressed = mouseDown and not player.mouseWasDown
     local punchAnim = player.sharedPunchAnim
 
+    -- handle punch state
+    -- handle punch state
     if mousePressed and player.state ~= "punch" then
         player.state = "punch"
+        player.lastCombatTime = love.timer.getTime()  -- <-- ADD THIS LINE
         punchAnim:gotoFrame(1)
         punchAnim:resume()
-
-        -- play first punch
-        local punchSound1 = soundHandler.punchWhoosh:clone()
-        punchSound1:setPitch(0.5 + math.random() * 0.5)
-        punchSound1:play()
-        player.justPunched = true
-
-        player.punchTimer = 0.1  -- schedule second punch
     elseif player.state == "punch" then
         punchAnim:update(dt)
+
+        -- play whoosh for air punches
+        if punchAnim.position == 2 and not punchAnim.hit1Played then
+            local s1 = soundHandler.punchWhoosh:clone()
+            s1:setPitch(0.5 + math.random()*0.5)
+            s1:play()
+            punchAnim.hit1Played = true
+        end
+        if punchAnim.position == 5 and not punchAnim.hit2Played then
+            local s2 = soundHandler.punchWhoosh:clone()
+            s2:setPitch(0.5 + math.random()*0.5)
+            s2:play()
+            punchAnim.hit2Played = true
+        end
+
+        -- reset flags
         if punchAnim.position == #punchAnim.frames then
             punchAnim:gotoFrame(1)
             punchAnim:pause()
+            punchAnim.hit1Played = false
+            punchAnim.hit2Played = false
             player.state = moving and "run" or "idle"
         end
     else
         player.state = moving and "run" or "idle"
     end
 
-    -- delayed punch
-    if player.punchTimer then
-        player.punchTimer = player.punchTimer - dt
-        if player.punchTimer <= 0 then
-            local punchSound2 = soundHandler.punchWhoosh:clone()
-            punchSound2:setPitch(0.5 + math.random() * 0.5)
-            punchSound2:play()
-            player.punchTimer = nil
-        end
-    end
-
-    -- movement & walking sounds
+    -- movement sounds
     if moving then
         player.collider:setLinearVelocity(moveX * player.speed, moveY * player.speed)
-
-        -- footsteps every 0.1s
         player.walkTimer = player.walkTimer - dt
         if player.walkTimer <= 0 then
             local stepSound = soundHandler.footstep:clone()
-            stepSound:setPitch(0.9 + math.random() * 0.2)
+            stepSound:setPitch(0.9 + math.random()*0.2)
             stepSound:play()
-            player.walkTimer = 0.4  -- super fast footsteps
+            player.walkTimer = 0.4
         end
     else
         player.collider:setLinearVelocity(0, 0)
         player.walkTimer = 0
     end
 
-
-
-
-    -- keep inside map
     local mapHandler = require("mapHandler")
     local map = mapHandler.gameMap1
     if map then
@@ -163,29 +177,63 @@ function player.update(dt)
         player.collider:setPosition(clampedX, clampedY)
     end
 
-    -- update animation
     player.anim = player.anims[player.state][player.dir]
     player.anim:update(dt)
+    player.mouseWasDown = mouseDown
+
+    -- healing logic
+    local now = love.timer.getTime()
+    local timeSinceCombat = now - player.lastCombatTime
+
+    -- only heal if not in combat for 30s AND not full HP
+    if timeSinceCombat >= player.healDelay and player.health < player.maxHealth then
+        player.healTimer = player.healTimer + dt
+        if player.healTimer >= 1 then
+            player.health = math.min(player.maxHealth, player.health + player.healRate)
+            player.healTimer = 0
+        end
+    else
+        -- stop healing if in combat or full HP
+        player.healTimer = 0
+    end
+
+    -- if fully healed, reset combat timer so regen won't instantly restart
+    if player.health >= player.maxHealth then
+        player.lastCombatTime = now
+    end
+
 end
 
 function player.draw()
     local scale = 7
-    local frameW, frameH = 32 * scale, 32 * scale
+    local frameW, frameH = 32*scale, 32*scale
+
+    local bx, by, bw, bh = player.getPunchBox()
+    love.graphics.setColor(1,0,0,0.5)
+    love.graphics.rectangle("line", bx, by, bw, bh)
+    love.graphics.setColor(1,1,1,1)
 
     player.anim:draw(
         player.images[player.state][player.dir],
-        player.x - frameW / 2,
-        player.y - frameH / 2,
+        player.x - frameW/2,
+        player.y - frameH/2,
         nil, scale, scale
     )
 end
 
 function player.drawHealth()
-    -- inside draw()
-    love.graphics.setColor(0,0,0)
-    love.graphics.rectangle("fill", 20, 20, 200, 20)
+    if player.health >= player.maxHealth then return end
+
+    local barW, barH = 100, 8
+    local x, y = player.x - barW/2, player.y - 80
+    local fill = barW * (player.health / player.maxHealth)
+
+    love.graphics.setColor(0,0,0,0.6)
+    love.graphics.rectangle("fill", x, y, barW, barH, barH/2, barH/2)
+
     love.graphics.setColor(0,1,0)
-    love.graphics.rectangle("fill", 20, 20, 200 * (player.health/player.maxHealth), 20)
+    love.graphics.rectangle("fill", x, y, fill, barH, barH/2, barH/2)
+
     love.graphics.setColor(1,1,1)
 end
 
