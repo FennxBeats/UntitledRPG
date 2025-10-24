@@ -3,7 +3,6 @@ local gameMap1Handler = require "spawnsPerMap.gameMap1Handler"
 
 local camera = require "libs/camera"
 
--- First, require all modules (but don't call their load functions yet)
 local EnemyHandler = require "EnemyHandler"
 local player = require "player"
 local mapHandler = require "mapHandler"
@@ -20,7 +19,7 @@ function love.load()
     soundHandler.playRandomSong()
     UIHandler.load()
     mapHandler.load()
-    worldHandler.load()  -- This can be anywhere now
+    worldHandler.load()
 
     if mapHandler.currentMapName == "map1" then
         gameMap1Handler.load()
@@ -52,7 +51,7 @@ function love.update(dt)
 
     player.update(dt)
     soundHandler.update(dt)
-    EnemyHandler.update(dt)
+    EnemyHandler.update(dt, player)
     mapHandler.update(dt)
     UIHandler.update(dt)
     worldHandler.update(dt)

@@ -22,7 +22,7 @@ local player = {
 
 function player.takeDamage(amount)
     player.health = player.health - amount
-    player.lastCombatTime = love.timer.getTime()  -- <-- ADD THIS LINE
+    player.lastCombatTime = love.timer.getTime()
     if player.health <= 0 then
         player.health = 0
         print("player dead :(")
@@ -116,10 +116,9 @@ function player.update(dt)
     local punchAnim = player.sharedPunchAnim
 
     -- handle punch state
-    -- handle punch state
     if mousePressed and player.state ~= "punch" then
         player.state = "punch"
-        player.lastCombatTime = love.timer.getTime()  -- <-- ADD THIS LINE
+        player.lastCombatTime = love.timer.getTime()
         punchAnim:gotoFrame(1)
         punchAnim:resume()
     elseif player.state == "punch" then

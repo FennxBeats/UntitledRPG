@@ -16,7 +16,7 @@ function mapHandler.load(mapName)
 
     if mapName == "map1" then
         mapHandler.maps[mapName] = sti("assets/maps/map1.lua")
-        mapHandler.gameMap1 = mapHandler.maps[mapName]  -- keep old reference
+        mapHandler.gameMap1 = mapHandler.maps[mapName]
     elseif mapName == "map2" then
         mapHandler.maps[mapName] = sti("assets/maps/map2.lua")
     else

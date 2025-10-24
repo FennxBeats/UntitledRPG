@@ -1,7 +1,6 @@
 -- EnemyHandler.lua
 local EnemyHandler = {}
 
-local player = require "player"
 local soundHandler = require "soundHandler"
 local mapHandler = require "mapHandler"
 local Slime = require "enemies.Slime"
@@ -20,7 +19,7 @@ function EnemyHandler.addEnemy(e)
     table.insert(enemies, e)
 end
 
-function EnemyHandler.update(dt)
+function EnemyHandler.update(dt, player)
     for i = #enemies, 1, -1 do
         local e = enemies[i]
 
@@ -43,7 +42,7 @@ function EnemyHandler.update(dt)
             if dist <= aggroRange then
                 e:update(dt, player)
             else
-                -- idle animation manually
+                -- idle animation
                 e.state = "idle"
                 e.frameTimer = e.frameTimer + dt
                 if e.frameTimer >= e.frameSpeed then
@@ -68,8 +67,6 @@ function EnemyHandler.update(dt)
                 end
             end
         end
-
-
 
         -- punch logic (handled in player file)
         local punchAnim = player.sharedPunchAnim
